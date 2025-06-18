@@ -10,12 +10,12 @@ class CNNStack(nn.Module):
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(p=0.5)
 
-    def forward(self, x):
+    def forward(self, x): #(batch_size, channels, height, width)
         x = self.conv(x)
         x = self.batch_norm(x)
         x = self.relu(x)
         x = self.dropout(x)
-        return x
+        return x #(batch_size, output_channels, height, width)
 
 class RNNStack(nn.Module):
     def __init__(self, input_size, hidden_size):
@@ -24,9 +24,9 @@ class RNNStack(nn.Module):
         self.batch_norm = nn.BatchNorm1d(hidden_size * 2)  # For bidirectional, multiply by 2
         self.dropout = nn.Dropout(p=0.5)
 
-    def forward(self, x):
+    def forward(self, x): #(batch_size, seq_length, input_size)
         x, _ = self.rnn(x)
-        x = self.batch_norm(x)
+        x = self.batch_norm(x.permute(0, 2, 1)).permute(0, 2, 1) 
         x = self.dropout(x)
-        return x
+        return x # (batch_size, seq_length, hidden_size * 2)
         
