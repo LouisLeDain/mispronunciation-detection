@@ -1,6 +1,7 @@
 import torch
-from sub import CNNStack, RNNStack
+from sub import CNNStack, RNNStack, Attention
 from encoder import AcousticEncoder, PhoneticEncoder, LinguisticEncoder
+from decoder import Decoder
 
 
 ## Testing CNNStack
@@ -18,6 +19,16 @@ rnn_stack = RNNStack(input_size=64, hidden_size=32)
 input_tensor_rnn = torch.randn(1, 81, 64)  # (batch_size, seq_length, input_size)
 output_tensor_rnn = rnn_stack(input_tensor_rnn)
 print(f"RNNStack output shape: {output_tensor_rnn.shape}")  # Expected: (1, 81, 64)
+
+## Testing Attention
+print("Testing Attention...")
+
+attention = Attention()
+query = torch.randn(1, 10, 64)  # (batch_size, seq_length, hidden_size)
+keys = torch.randn(1, 81, 64)  # (batch_size, seq_length, hidden_size)
+values = torch.randn(1, 81, 64)  # (batch_size, seq_length, hidden_size)
+context = attention(query, keys, values)
+print(f"Attention context shape: {context.shape}")  # Expected: (1, 10, 64)
 
 ## Testing AcousticEncoder
 print("Testing AcousticEncoder...")
@@ -44,3 +55,12 @@ v_output, k_output = linguistic_encoder(input_tensor_linguistic)
 print(f"LinguisticEncoder v_output shape: {v_output.shape}")  # Expected: (1, 10, 64)
 print(f"LinguisticEncoder k_output shape: {k_output.shape}")  # Expected:
 
+## Testing Decoder
+print("Testing Decoder...")
+
+decoder = Decoder(input_size=128, output_size=40)
+query = torch.randn(1, 10, 64)  # (batch_size, seq_length, input_size)
+keys = torch.randn(1, 81, 64)  # (batch_size, seq_length, input_size)
+values = torch.randn(1, 81, 64)  # (batch_size, seq_length, input_size)
+output = decoder(query, keys, values)
+print(f"Decoder output shape: {output.shape}")  # Expected: (1, 10, 40)

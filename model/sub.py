@@ -30,3 +30,12 @@ class RNNStack(nn.Module):
         x = self.dropout(x)
         return x # (batch_size, seq_length, hidden_size * 2)
         
+class Attention(nn.Module):
+    def __init__(self):
+        super(Attention, self).__init__()
+
+    def forward(self, query, keys, values):
+        scores = torch.bmm(query, keys.transpose(1, 2))
+        attn_weights = F.softmax(scores, dim=-1)
+        context = torch.bmm(attn_weights, values)
+        return context    
