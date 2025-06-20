@@ -1,6 +1,7 @@
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 class CNNStack(nn.Module):
     def __init__(self, input_channels, output_channels):
@@ -36,6 +37,59 @@ class Attention(nn.Module):
 
     def forward(self, query, keys, values):
         scores = torch.bmm(query, keys.transpose(1, 2))
+        print(f"Attention scores shape: {scores.shape}")
         attn_weights = F.softmax(scores, dim=-1)
+        print(f"Attention weights shape: {attn_weights.shape}")
         context = torch.bmm(attn_weights, values)
         return context    
+
+def beam_search_over_frames(Y, beam_width=3, sequence_length=10):
+    """
+    Perform beam search over frame-wise probability sequences for a batch of inputs.
+
+    :param Y: A numpy array of shape [B, T, S] containing frame-wise probabilities for a batch.
+    :param beam_width: The number of sequences to keep track of at each step.
+    :param sequence_length: The desired length of the output sequence.
+    :return: A list of the most likely sequences found by beam search for each batch element.
+    """
+    B, T, S = Y.shape
+    batch_best_sequences = []
+
+    for b in range(B):
+        beams = [([], 0.0)]
+
+        for t in range(T):
+            current_probs = Y[b, t]
+            new_beams = []
+
+            for sequence, log_prob in beams:
+                if len(sequence) == sequence_length:
+                    # If the sequence has reached the desired length, carry it over without changes
+                    new_beams.append((sequence, log_prob))
+                    continue
+
+                # Calculate log probabilities for each possible next token
+                log_probs = np.log(current_probs)
+
+                # Find the top `beam_width` candidates
+                top_candidates = np.argpartition(log_probs, -beam_width)[-beam_width:]
+
+                for candidate in top_candidates:
+                    new_sequence = sequence + [candidate]
+                    new_log_prob = log_prob + log_probs[candidate]
+                    new_beams.append((new_sequence, new_log_prob))
+
+            # Sort all new beams by their log probability
+            new_beams.sort(key=lambda x: x[1], reverse=True)
+
+            # Select the top `beam_width` beams for the next iteration
+            beams = new_beams[:beam_width]
+
+        # Return the best beam for the current batch element
+        best_sequence, _ = max(beams, key=lambda x: x[1])
+        batch_best_sequences.append(best_sequence)
+    # Convert sequences to torch tensors for consistency and concatenate sequences
+    batch_best_sequences_list = [torch.tensor(seq) for seq in batch_best_sequences]
+    batch_best_sequences = torch.stack(batch_best_sequences_list, dim=0)
+
+    return batch_best_sequences

@@ -2,7 +2,7 @@ import torch
 from sub import CNNStack, RNNStack, Attention
 from encoder import AcousticEncoder, PhoneticEncoder, LinguisticEncoder
 from decoder import Decoder
-
+from main import APLModel
 
 ## Testing CNNStack
 print("Testing CNNStack...")
@@ -64,3 +64,16 @@ keys = torch.randn(1, 81, 64)  # (batch_size, seq_length, input_size)
 values = torch.randn(1, 81, 64)  # (batch_size, seq_length, input_size)
 output = decoder(query, keys, values)
 print(f"Decoder output shape: {output.shape}")  # Expected: (1, 10, 40)
+
+## Testing APLModel
+print("Testing APLModel...")
+
+apl_model = APLModel(input_size=64, vocab_size=40, embedding_dim=64, hidden_size=32, output_size=128, decoder_size=192)
+acoustic_input = torch.rand(2, 81, 64)  # (batch_size, seq_length, input_size)
+phonetic_input = torch.rand(2, 81, 64)  # (batch_size, seq_length, input_size)
+phoneme_input = torch.randint(0, 40, (2, 10))  # (batch_size, seq_length)
+print(f"Phoneme input shape: {phoneme_input.shape}")  # Expected: (1, 10)
+output_apl = apl_model(acoustic_input, phonetic_input, phoneme_input)
+print(f"APLModel output shape : {output_apl.shape}")  # Expected: (2, 10)
+
+print("\n All tests completed successfully.")
