@@ -3,6 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+PHONEMES = ['AA', 'AE', 'AH', 'AO', 'AW', 'AX', 'AY', 'B', 'CH', 'D', 
+            'DH', 'EH', 'ER', 'EY', 'F', 'G', 'HH', 'IH', 'IY', 'JH', 
+            'K', 'L', 'M', 'N', 'NG', 'OW', 'OY', 'P', 'R', 'S', 
+            'SH', 'T', 'TH', 'UH', 'UW', 'V', 'W', 'Y', 'Z', 'ZH',
+            '[PAD]']
+
 class CNNStack(nn.Module):
     def __init__(self, input_channels, output_channels):
         super(CNNStack, self).__init__()
@@ -37,9 +43,7 @@ class Attention(nn.Module):
 
     def forward(self, query, keys, values):
         scores = torch.bmm(query, keys.transpose(1, 2))
-        print(f"Attention scores shape: {scores.shape}")
         attn_weights = F.softmax(scores, dim=-1)
-        print(f"Attention weights shape: {attn_weights.shape}")
         context = torch.bmm(attn_weights, values)
         return context    
 
@@ -93,3 +97,18 @@ def beam_search_over_frames(Y, beam_width=3, sequence_length=10):
     batch_best_sequences = torch.stack(batch_best_sequences_list, dim=0)
 
     return batch_best_sequences
+
+class Tokenizer:
+    def __init__(self, phonemes=PHONEMES):
+        self.phonemes = phonemes
+        self.phoneme_to_id = {phoneme: idx for idx, phoneme in enumerate(phonemes)}
+        self.id_to_phoneme = {idx: phoneme for idx, phoneme in enumerate(phonemes)}
+
+    def split(self, text):
+        return text.split(sep=' ')
+
+    def encode(self, sequence):
+        return [self.phoneme_to_id[phoneme] for phoneme in sequence]
+
+    def decode(self, ids):
+        return [self.id_to_phoneme[idx] for idx in ids]    

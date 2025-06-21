@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from sub import CNNStack, RNNStack
+from utils import CNNStack, RNNStack
 
 class AcousticEncoder(nn.Module):
     def __init__(self, input_size):

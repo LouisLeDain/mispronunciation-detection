@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 from encoder import AcousticEncoder, PhoneticEncoder, LinguisticEncoder
 from decoder import Decoder
-from sub import beam_search_over_frames
+from utils import beam_search_over_frames
 
 class APLModel(nn.Module):
     def __init__(self, input_size, vocab_size, embedding_dim, hidden_size, output_size, decoder_size):
