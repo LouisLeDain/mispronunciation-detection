@@ -3,6 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+import librosa
+from transformers import AutoProcessor, AutoModelForCTC
+
 PHONEMES = ['AA', 'AE', 'AH', 'AO', 'AW', 'AX', 'AY', 'B', 'CH', 'D', 
             'DH', 'EH', 'ER', 'EY', 'F', 'G', 'HH', 'IH', 'IY', 'JH', 
             'K', 'L', 'M', 'N', 'NG', 'OW', 'OY', 'P', 'R', 'S', 
@@ -111,4 +114,28 @@ class Tokenizer:
         return [self.phoneme_to_id[phoneme] for phoneme in sequence]
 
     def decode(self, ids):
-        return [self.id_to_phoneme[idx] for idx in ids]    
+        return [self.id_to_phoneme[idx] for idx in ids]
+
+def capture_transformer_network_outputs(audio_file):
+    processor = AutoProcessor.from_pretrained("mrrubino/wav2vec2-large-xlsr-53-l2-arctic-phoneme")
+    model = AutoModelForCTC.from_pretrained("mrrubino/wav2vec2-large-xlsr-53-l2-arctic-phoneme")
+
+    audio_input, sample_rate = librosa.load(audio_file, sr=16000)
+    input_values = processor(audio_input, sampling_rate=sample_rate, return_tensors="pt").input_values
+
+    layer_transformer_outputs = []
+
+    def transformer_hook(module, input, output):
+        layer_transformer_outputs.append(output)
+
+    for layer in model.wav2vec2.encoder.layers:
+        layer.register_forward_hook(transformer_hook)
+    
+    with torch.no_grad():
+        outputs = model(input_values)
+    
+    for layer in model.wav2vec2.encoder.layers:
+        layer._forward_hooks.clear()
+    
+    return layer_transformer_outputs
+

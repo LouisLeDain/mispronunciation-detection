@@ -2,7 +2,7 @@ import torch
 from utils import CNNStack, RNNStack, Attention, Tokenizer
 from encoder import AcousticEncoder, PhoneticEncoder, LinguisticEncoder
 from decoder import Decoder
-from main import APLModel
+from apl_model import APLModel
 
 ## Testing CNNStack
 print("\n Testing CNNStack...")
