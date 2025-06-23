@@ -4,7 +4,6 @@ import torch.nn.functional as F
 
 from encoder import AcousticEncoder, PhoneticEncoder, LinguisticEncoder
 from decoder import Decoder
-from utils import beam_search_over_frames
 
 class APLModel(nn.Module):
     def __init__(self, input_size, vocab_size, embedding_dim, hidden_size, output_size, decoder_size):
@@ -24,7 +23,6 @@ class APLModel(nn.Module):
         query = torch.cat((acoustic_encoding, phonetic_encoding), dim=-1)  # Concatenate encodings
         values, keys = self.linguistic_encoder(phoneme_input)
 
-        output = self.decoder(query, keys, values)
-        output_sequences = beam_search_over_frames(output.detach().cpu().numpy(), beam_width=3, sequence_length=10)
+        logits = self.decoder(query, keys, values)
 
-        return output_sequences  # (batch_size, seq_length, vocab_size)
+        return logits # (batch_size, seq_length, vocab_size)

@@ -10,7 +10,7 @@ PHONEMES = ['AA', 'AE', 'AH', 'AO', 'AW', 'AX', 'AY', 'B', 'CH', 'D',
             'DH', 'EH', 'ER', 'EY', 'F', 'G', 'HH', 'IH', 'IY', 'JH', 
             'K', 'L', 'M', 'N', 'NG', 'OW', 'OY', 'P', 'R', 'S', 
             'SH', 'T', 'TH', 'UH', 'UW', 'V', 'W', 'Y', 'Z', 'ZH',
-            '[PAD]']
+            '<PAD>']
 
 class CNNStack(nn.Module):
     def __init__(self, input_channels, output_channels):
@@ -115,6 +115,15 @@ class Tokenizer:
 
     def decode(self, ids):
         return [self.id_to_phoneme[idx] for idx in ids]
+
+    def phonemes_to_tensor(self, phonemes):
+        """
+        Convert a phoneme sequence to a tensor of IDs.
+        :param phonemes: A phonemes string.
+        :return: A tensor of shape (len(phonemes),) containing the corresponding IDs
+        """
+        phoneme_ids = self.encode(self.split(phonemes))
+        return torch.tensor(phoneme_ids, dtype=torch.long)
 
 def capture_transformer_network_outputs(audio_file):
     processor = AutoProcessor.from_pretrained("mrrubino/wav2vec2-large-xlsr-53-l2-arctic-phoneme")
